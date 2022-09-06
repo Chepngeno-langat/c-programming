@@ -2,8 +2,8 @@
 
 int main()
 {
-  char input;
-  prompt();
+  char input[30];
 
-  printf("user input is: %c\n", prompt());
+  fgets(input, 100, stdin);
+  printf("user input is: %s\n", input);
 }
