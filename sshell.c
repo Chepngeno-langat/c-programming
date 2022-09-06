@@ -4,25 +4,34 @@
 #include <time.h>
 #include <sys/wait.h>
 
-int main(int argc, char* argv[])
+int main()
 {
-  int pid = fork();
+  char cmd[100], command[100], *parameters;
+  //environment variable
+  char * envp[] = {NULL};
+  int id;
 
-  if (pid == -1)
+  while (1)
     {
-      return 1;
-    }
+      type_prompt;
+      read_command (command, parameters);
 
-  if (pid == 0)
-    {
-      execlp("ping", "ping", "-c", "3", "google.com", NULL);
+      id = fork();
+      if (id == -1)
+	{
+	  perror("FAILED!\n");
+	}
+      if (id == 0)
+	{
+	  execve(cmd, parameters, envp);
+	}
+      else
+	{
+	  wait(NULL);
+	}
+      break;
     }
-  else
-    {
-      wait(NULL);
-      printf("Success!\n");
-      printf("Some post processing goes here\n");
-    }
+  
   return 0;
 }
   
