@@ -4,121 +4,95 @@
 #include <string.h>
 #include <sys/wait.h>
 
-char** parse(char* input)
-//passing input by breaking it down to single words
+
+int type_prompt(void)
 {
-  char* pieces = strtok(input, " ");
+	char *prompt = "$ ";
+	ssize_t writecount = 0;
 
-  while (pieces != NULL)
-    {
-      printf("%s\n", pieces);
-
-      pieces = strtok(NULL, " ");
-    }
-  
-  return 0;
-  }
-
-char* read_line()
-//Takes input from stdin using the getline() function
-{
-  char* command;
-  size_t n = 100;
-  size_t line;
-
-  command = (char*)malloc(sizeof(char) * n);
-
-  if (command == NULL)
-    {
-      printf("Error: Couldn't allocate memory\n");
-      exit (1);
-    }
-  printf("Input: \n");
-  line = getline(&command, &n, stdin);
-
-  return command;
+	if (isatty(STDIN_FILENO) == 1)
+	{
+		writecount = write(STDOUT_FILENO, prompt, 2);
+		if (writecount == -1)
+		exit(0);
+	}
+	return (0);
 }
+
+
+void read_command (char cmd[], char *par[])
+{
+  char line;
+  int count = 0, i = 0, j = 0;
+  char *array[100], *pch;
+
+  ssize_t n = 1024;
+  char *buf = malloc(sizeof(char) * n);
+  /*par = malloc(sizeof(char) * n);*/
+
+  //read line
+  line = getline(&buf, &n, stdin);
+  printf("%s\n", buf);
+
+  pch = strtok(buf, " ");
+
+  while (pch != NULL)
+    {
+      array[i++] = strdup(pch);
+      printf("%s\n", pch);
+      pch = strtok(NULL, " ");
+    }
+  strcpy(cmd, array[0]);
+  printf("cmd is : %s\n", cmd);
+
+  for (j = 0; j < i; j++)
+    {
+      par[j] = array[j];
+    }
+  par[i] = NULL;
+  for (int x = 0; x < i; x++)
+    {
+      printf("parameters are: %s\n", par[x]);
+    }
+  /* printf("%s\n", par[i++]); */
+
+  free(buf);
+  
+  return;
+}
+
 
 int main()
 {
-  //main loop of shell
-  printf("Welcome to sh!\n");
-  printf("Made by Karen.\n");
-  printf("\n");
-
-  char cmd[100], *argVec[100];
+  char cmd[100], command[100], *parameters[20];
   //environment variable
-  char *envp[] = {NULL};
-  
-  char* input = read_line();
-
-  while (1)
-    {
-      parse(input);
-
-      int id = fork();
-      if (id == -1)
-	{
-	  perror("FAILED!\n");
-	}
-      if (id == 0)
-	{
-	  printf("This is the child process\n");
-	  printf("%s\n", input);
-	  execve(cmd, argVec, envp);
-	}
-      else
-	{
-	  wait(NULL);
-	  printf("Success!\n");
-	}
-      break;
-    }
-  return 0;
-}
-/*{
-  size_t n = 100;
-  char *parameters = malloc(sizeof(char) * n);
-  char *command = malloc(sizeof(char) * n);
-  
-  char cmd[] = "/usr/bin/";
-  char *argVec[100] = {NULL};
-  //environment variable
-  char *envVec[] = {NULL}; /*{(char *) "PATH=/bin", 0};
-
-
+  char *envp[] = {(char *) "PATH=/usr/bin/", 0};
   int id;
 
   while (1)
     {
-      printf("command: ");
-      getline(&command, &n, stdin);
-      printf("%s", command);
-      
-      printf("parameters: ");
-      getline(&parameters, &n, stdin);
-      printf("%s", parameters);
+      type_prompt();
+      read_command (command, parameters);
 
       id = fork();
-
       if (id == -1)
 	{
-	  perror("Failed!\n");
-	  return 1;
+	  perror("FAILED!\n");
 	}
-      //child process
-      if (id == 0)
+      else if (id == 0)
 	{
+	  strcpy(cmd, "/usr/bin/");
+	  strcat(cmd, command);
+	  execve(cmd, parameters, envp);
+	  printf("command is: %s\n", cmd);
+	  printf("par: %s\n", parameters[1]);
 	  printf("This is the child process\n");
-	  execve(cmd, argVec, envVec);
 	}
-      //parent process
       else
 	{
 	  wait(NULL);
 	  printf("Success!\n");
 	}
-      /*free(parameters);
       break;
     }
-    }*/
+}
